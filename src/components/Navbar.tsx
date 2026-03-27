@@ -1,15 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const navLinks = [
   { label: "Home", path: "/" },
-  { label: "Services", path: "/#services" },
-  { label: "Gallery", path: "/#gallery" },
-  { label: "Book Event", path: "/booking" },
-  { label: "Contact", path: "/#contact" },
+  { label: "Services", path: "/services" },
+  { label: "Gallery", path: "/gallery" },
+  { label: "Booking", path: "/booking" },
 ];
 
 const Navbar = () => {
@@ -24,6 +23,8 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => setIsOpen(false), [location]);
+
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <motion.nav
@@ -48,11 +49,19 @@ const Navbar = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className="text-ivory/80 hover:text-gold font-body text-sm tracking-wider uppercase transition-colors duration-300"
+                className={`font-body text-sm tracking-wider uppercase transition-colors duration-300 ${
+                  isActive(link.path) ? "text-gold" : "text-ivory/80 hover:text-gold"
+                }`}
               >
                 {link.label}
               </Link>
             ))}
+            <Link
+              to="/login"
+              className="flex items-center gap-2 text-ivory/80 hover:text-gold font-body text-sm tracking-wider uppercase transition-colors duration-300"
+            >
+              <LogIn size={16} /> Login
+            </Link>
             <Link to="/booking" className="btn-luxury text-sm">
               Book Now
             </Link>
@@ -82,11 +91,19 @@ const Navbar = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className="text-ivory/80 hover:text-gold font-body text-base py-2 tracking-wider uppercase transition-colors"
+                  className={`font-body text-base py-2 tracking-wider uppercase transition-colors ${
+                    isActive(link.path) ? "text-gold" : "text-ivory/80 hover:text-gold"
+                  }`}
                 >
                   {link.label}
                 </Link>
               ))}
+              <Link
+                to="/login"
+                className="text-ivory/80 hover:text-gold font-body text-base py-2 tracking-wider uppercase transition-colors flex items-center gap-2"
+              >
+                <LogIn size={16} /> Login
+              </Link>
               <Link to="/booking" className="btn-luxury text-center mt-2">
                 Book Now
               </Link>

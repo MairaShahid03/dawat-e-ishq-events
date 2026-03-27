@@ -1,4 +1,4 @@
-import { Heart, Instagram, Facebook, Phone, Mail, MapPin } from "lucide-react";
+import { Heart, Instagram, Phone, Mail, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 
@@ -10,7 +10,7 @@ const Footer = () => (
         <div className="md:col-span-1">
           <img src={logo} alt="Dawat-e-Ishq" className="h-12 w-auto mb-4" />
           <p className="text-sm leading-relaxed">
-            Crafting unforgettable moments with elegance, tradition, and love.
+            Premium event planning based in Karachi. Crafting unforgettable moments with elegance, tradition, and love.
           </p>
         </div>
 
@@ -19,8 +19,10 @@ const Footer = () => (
           <h4 className="text-gold font-heading text-lg mb-4">Quick Links</h4>
           <div className="flex flex-col gap-2 text-sm">
             <Link to="/" className="hover:text-gold transition-colors">Home</Link>
+            <Link to="/services" className="hover:text-gold transition-colors">Services</Link>
+            <Link to="/gallery" className="hover:text-gold transition-colors">Gallery</Link>
             <Link to="/booking" className="hover:text-gold transition-colors">Book Event</Link>
-            <Link to="/dashboard" className="hover:text-gold transition-colors">Dashboard</Link>
+            <Link to="/login" className="hover:text-gold transition-colors">Login</Link>
           </div>
         </div>
 
@@ -32,7 +34,7 @@ const Footer = () => (
             <span>Ramadan Events</span>
             <span>Birthday Celebrations</span>
             <span>Bridal & Baby Showers</span>
-            <span>Custom Events</span>
+            <span>Destination Weddings</span>
           </div>
         </div>
 
@@ -40,26 +42,27 @@ const Footer = () => (
         <div>
           <h4 className="text-gold font-heading text-lg mb-4">Contact Us</h4>
           <div className="flex flex-col gap-3 text-sm">
-            <a href="tel:+923001234567" className="flex items-center gap-2 hover:text-gold transition-colors">
-              <Phone size={14} /> +92 300 123 4567
+            <a href="tel:03282681668" className="flex items-center gap-2 hover:text-gold transition-colors">
+              <Phone size={14} /> 0328-2681668
             </a>
             <a href="mailto:info@dawateishq.com" className="flex items-center gap-2 hover:text-gold transition-colors">
               <Mail size={14} /> info@dawateishq.com
             </a>
             <span className="flex items-center gap-2">
-              <MapPin size={14} /> Lahore, Pakistan
+              <MapPin size={14} /> Karachi, Pakistan
             </span>
           </div>
           <div className="flex gap-4 mt-4">
-            <a href="#" className="text-ivory/50 hover:text-gold transition-colors"><Instagram size={20} /></a>
-            <a href="#" className="text-ivory/50 hover:text-gold transition-colors"><Facebook size={20} /></a>
+            <a href="https://instagram.com/dawateishq" target="_blank" rel="noopener noreferrer" className="text-ivory/50 hover:text-gold transition-colors">
+              <Instagram size={20} />
+            </a>
           </div>
         </div>
       </div>
 
       <div className="border-t border-gold/10 mt-12 pt-8 text-center text-xs text-ivory/40">
         <p className="flex items-center justify-center gap-1">
-          © 2026 Dawat-e-Ishq. Made with <Heart size={12} className="text-gold" /> in Pakistan
+          © 2026 Dawat-e-Ishq. Made with <Heart size={12} className="text-gold" /> in Karachi
         </p>
       </div>
     </div>
