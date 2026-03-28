@@ -5,90 +5,97 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { supabase } from "@/integrations/supabase/client";
+import heroMehndi from "@/assets/hero-mehndi.jpg";
+import heroBaraat from "@/assets/hero-baraat.jpg";
 
-const GALLERY_FOLDERS = [
-  { name: "baraat", label: "Baraat" },
-  { name: "birthday", label: "Birthday" },
-  { name: "dua-e-khair", label: "Dua-e-Khair" },
-  { name: "mayoun", label: "Mayoun" },
-  { name: "mehndi", label: "Mehndi" },
-  { name: "nikkah", label: "Nikkah" },
-  { name: "qawali-night", label: "Qawali Night" },
-  { name: "engagement", label: "Engagement" },
-  { name: "others", label: "Others" },
+const GALLERY_CATEGORIES = [
+  "baraat", "birthday", "dua-e-khair", "mayoun", "mehndi", "nikkah", "others", "engagement", "qawali night",
 ];
+
+const DUMMY_CATEGORIES: Record<string, { images: string[]; label: string }> = {
+  engagement: {
+    label: "Engagement",
+    images: [heroMehndi, heroBaraat],
+  },
+  "qawali night": {
+    label: "Qawali Night",
+    images: [heroBaraat, heroMehndi],
+  },
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  baraat: "Baraat",
+  birthday: "Birthday",
+  "dua-e-khair": "Dua-e-Khair",
+  mayoun: "Mayoun",
+  mehndi: "Mehndi",
+  nikkah: "Nikkah",
+  others: "Others",
+  engagement: "Engagement",
+  "qawali night": "Qawali Night",
+};
+
+interface GalleryImage {
+  id: string;
+  image_url: string;
+  category: string;
+}
 
 const Gallery = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [categoryImages, setCategoryImages] = useState<Record<string, string[]>>({});
-  const [folderImages, setFolderImages] = useState<string[]>([]);
+  const [allImages, setAllImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [folderLoading, setFolderLoading] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  // Load first image from each folder for category cards
   useEffect(() => {
-    const loadCategoryThumbs = async () => {
+    const fetchGallery = async () => {
       setLoading(true);
-      const thumbs: Record<string, string[]> = {};
-
-      await Promise.all(
-        GALLERY_FOLDERS.map(async (folder) => {
-          const { data } = await supabase.storage
-            .from("gallery-images")
-            .list(folder.name, { limit: 1, sortBy: { column: "name", order: "asc" } });
-
-          if (data && data.length > 0 && data[0].name) {
-            const { data: urlData } = supabase.storage
-              .from("gallery-images")
-              .getPublicUrl(`${folder.name}/${data[0].name}`);
-            thumbs[folder.name] = [urlData.publicUrl];
-          }
-        })
-      );
-
-      setCategoryImages(thumbs);
+      const { data, error } = await supabase
+        .from("gallery")
+        .select("id, image_url, category");
+      
+      console.log("Gallery data:", data, "Error:", error);
+      
+      if (data) {
+        setAllImages(data.filter(img => img.image_url && img.category) as GalleryImage[]);
+      }
       setLoading(false);
     };
-    loadCategoryThumbs();
+    fetchGallery();
   }, []);
 
-  // Load all images from selected folder
-  const openCategory = async (folderName: string) => {
-    setSelectedCategory(folderName);
-    setFolderLoading(true);
+  const groupedImages = allImages.reduce<Record<string, GalleryImage[]>>((acc, img) => {
+    const cat = img.category.toLowerCase().trim();
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(img);
+    return acc;
+  }, {});
 
-    const { data } = await supabase.storage
-      .from("gallery-images")
-      .list(folderName, { limit: 100, sortBy: { column: "name", order: "asc" } });
-
-    if (data) {
-      const urls = data
-        .filter((f) => f.name && !f.name.startsWith("."))
-        .map((f) => {
-          const { data: urlData } = supabase.storage
-            .from("gallery-images")
-            .getPublicUrl(`${folderName}/${f.name}`);
-          return urlData.publicUrl;
-        });
-      setFolderImages(urls);
-    }
-    setFolderLoading(false);
+  const getCategoryThumb = (cat: string): string | null => {
+    if (DUMMY_CATEGORIES[cat]) return DUMMY_CATEGORIES[cat].images[0];
+    const imgs = groupedImages[cat];
+    return imgs?.[0]?.image_url || null;
   };
+
+  const getCategoryImages = (cat: string): string[] => {
+    if (DUMMY_CATEGORIES[cat]) return DUMMY_CATEGORIES[cat].images;
+    return (groupedImages[cat] || []).map(i => i.image_url);
+  };
+
+  const currentImages = selectedCategory ? getCategoryImages(selectedCategory) : [];
 
   const navigateLightbox = (dir: number) => {
     if (lightboxIndex === null) return;
     setLightboxIndex((prev) => {
       if (prev === null) return null;
-      return (prev + dir + folderImages.length) % folderImages.length;
+      return (prev + dir + currentImages.length) % currentImages.length;
     });
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-noir">
       <Navbar />
 
-      {/* Hero */}
       <section className="pt-28 pb-16 px-4 bg-noir">
         <div className="container mx-auto text-center">
           <motion.p
@@ -110,7 +117,7 @@ const Gallery = () => {
         </div>
       </section>
 
-      <section className="section-padding bg-background">
+      <section className="section-padding bg-noir">
         <div className="container mx-auto">
           <AnimatePresence mode="wait">
             {!selectedCategory ? (
@@ -126,34 +133,35 @@ const Gallery = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {GALLERY_FOLDERS.map((folder, i) => {
-                      const thumb = categoryImages[folder.name]?.[0];
+                    {GALLERY_CATEGORIES.map((cat, i) => {
+                      const thumb = getCategoryThumb(cat);
+                      const hasImages = DUMMY_CATEGORIES[cat] || (groupedImages[cat]?.length > 0);
                       return (
                         <motion.button
-                          key={folder.name}
+                          key={cat}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.08 }}
-                          onClick={() => openCategory(folder.name)}
-                          className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-border hover:border-gold/30 transition-all duration-500"
+                          onClick={() => setSelectedCategory(cat)}
+                          className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-gold/10 hover:border-gold/30 transition-all duration-500"
                         >
                           {thumb ? (
                             <img
                               src={thumb}
-                              alt={folder.label}
+                              alt={CATEGORY_LABELS[cat]}
                               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                               loading="lazy"
                             />
                           ) : (
-                            <div className="w-full h-full bg-muted flex items-center justify-center">
-                              <span className="text-muted-foreground text-sm">No images yet</span>
+                            <div className="w-full h-full bg-noir/50 flex items-center justify-center">
+                              <span className="text-ivory/30 text-sm">Coming Soon</span>
                             </div>
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-noir/80 via-noir/20 to-transparent" />
                           <div className="absolute bottom-0 left-0 right-0 p-6">
-                            <h3 className="font-heading text-xl text-ivory font-bold">{folder.label}</h3>
+                            <h3 className="font-heading text-xl text-ivory font-bold">{CATEGORY_LABELS[cat]}</h3>
                             <p className="text-gold text-sm mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              View Gallery →
+                              {hasImages ? "View Gallery →" : "Coming Soon"}
                             </p>
                           </div>
                         </motion.button>
@@ -170,29 +178,25 @@ const Gallery = () => {
                 exit={{ opacity: 0 }}
               >
                 <button
-                  onClick={() => { setSelectedCategory(null); setFolderImages([]); }}
+                  onClick={() => { setSelectedCategory(null); }}
                   className="flex items-center gap-2 text-gold hover:text-gold-light font-body mb-8 transition-colors"
                 >
                   <ArrowLeft size={18} /> Back to Categories
                 </button>
 
-                <h2 className="font-heading text-2xl md:text-3xl text-foreground font-bold mb-8">
-                  {GALLERY_FOLDERS.find((f) => f.name === selectedCategory)?.label}
+                <h2 className="font-heading text-2xl md:text-3xl text-ivory font-bold mb-8">
+                  {CATEGORY_LABELS[selectedCategory] || selectedCategory}
                 </h2>
 
-                {folderLoading ? (
-                  <div className="flex items-center justify-center py-20">
-                    <Loader2 className="animate-spin text-gold" size={40} />
-                  </div>
-                ) : folderImages.length === 0 ? (
+                {currentImages.length === 0 ? (
                   <div className="text-center py-20">
-                    <p className="text-muted-foreground">No images in this category yet.</p>
+                    <p className="text-ivory/40">No images in this category yet.</p>
                   </div>
                 ) : (
                   <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
-                    {folderImages.map((url, i) => (
+                    {currentImages.map((url, i) => (
                       <motion.div
-                        key={url}
+                        key={url + i}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
@@ -245,7 +249,7 @@ const Gallery = () => {
               <ChevronRight size={40} />
             </button>
             <img
-              src={folderImages[lightboxIndex]}
+              src={currentImages[lightboxIndex]}
               alt="Full view"
               className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg"
               onClick={(e) => e.stopPropagation()}
