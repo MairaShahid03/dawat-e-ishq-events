@@ -16,7 +16,7 @@ const images = [
 ];
 
 const GallerySection = () => (
-  <section id="gallery" className="section-padding bg-background">
+  <section id="gallery" className="section-padding bg-noir">
     <div className="container mx-auto">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -25,7 +25,7 @@ const GallerySection = () => (
         className="text-center mb-16"
       >
         <p className="text-gold font-heading text-sm tracking-[0.3em] uppercase mb-3">Our Portfolio</p>
-        <h2 className="font-heading text-3xl md:text-5xl text-noir font-bold mb-4">Featured Gallery</h2>
+        <h2 className="font-heading text-3xl md:text-5xl text-ivory font-bold mb-4">Featured Gallery</h2>
         <div className="gold-divider" />
       </motion.div>
 
