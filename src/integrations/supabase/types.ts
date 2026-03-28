@@ -19,49 +19,76 @@ export type Database = {
           budget_pkr: number | null
           category_id: string | null
           created_at: string
+          custom_theme: string | null
+          destination_city: string | null
+          email: string | null
           event_date: string | null
+          flowers: string[] | null
+          full_name: string | null
           guests: number | null
           id: string
           is_destination: boolean | null
           location: string | null
           notes: string | null
           package_type: string | null
+          phone: string | null
+          services: string[] | null
           status: string | null
+          sub_categories: string[] | null
           subcategory_id: string | null
           theme: string | null
           user_id: string | null
+          venue_preference: string | null
         }
         Insert: {
           budget_pkr?: number | null
           category_id?: string | null
           created_at?: string
+          custom_theme?: string | null
+          destination_city?: string | null
+          email?: string | null
           event_date?: string | null
+          flowers?: string[] | null
+          full_name?: string | null
           guests?: number | null
           id?: string
           is_destination?: boolean | null
           location?: string | null
           notes?: string | null
           package_type?: string | null
+          phone?: string | null
+          services?: string[] | null
           status?: string | null
+          sub_categories?: string[] | null
           subcategory_id?: string | null
           theme?: string | null
           user_id?: string | null
+          venue_preference?: string | null
         }
         Update: {
           budget_pkr?: number | null
           category_id?: string | null
           created_at?: string
+          custom_theme?: string | null
+          destination_city?: string | null
+          email?: string | null
           event_date?: string | null
+          flowers?: string[] | null
+          full_name?: string | null
           guests?: number | null
           id?: string
           is_destination?: boolean | null
           location?: string | null
           notes?: string | null
           package_type?: string | null
+          phone?: string | null
+          services?: string[] | null
           status?: string | null
+          sub_categories?: string[] | null
           subcategory_id?: string | null
           theme?: string | null
           user_id?: string | null
+          venue_preference?: string | null
         }
         Relationships: [
           {
@@ -126,9 +153,57 @@ export type Database = {
         }
         Relationships: []
       }
+      meetings: {
+        Row: {
+          admin_note: string | null
+          booking_id: string | null
+          created_at: string | null
+          id: string
+          meeting_date: string | null
+          meeting_location: string | null
+          rejection_reason: string | null
+          status: string | null
+          user_id: string | null
+          user_response: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          meeting_date?: string | null
+          meeting_location?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          user_id?: string | null
+          user_response?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          meeting_date?: string | null
+          meeting_location?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          user_id?: string | null
+          user_response?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meetings_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
+          email: string | null
           full_name: string | null
           id: string
           phone: string | null
@@ -136,6 +211,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
@@ -143,6 +219,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
