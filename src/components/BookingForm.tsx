@@ -212,6 +212,22 @@ const BookingForm = () => {
       );
       case 4: return (
         <div>
+          <h3 className="font-heading text-2xl text-ivory mb-4">Event Location</h3>
+          <p className="text-ivory/40 text-sm mb-4">Search or pin your venue location</p>
+          <LocationPicker
+            location={data.location}
+            latitude={data.latitude}
+            longitude={data.longitude}
+            onLocationChange={(loc, lat, lng) => {
+              update("location", loc);
+              update("latitude", lat);
+              update("longitude", lng);
+            }}
+          />
+        </div>
+      );
+      case 5: return (
+        <div>
           <h3 className="font-heading text-2xl text-ivory mb-4">Select Package</h3>
           <div className="space-y-3">
             {PACKAGES.map((pkg) => (
