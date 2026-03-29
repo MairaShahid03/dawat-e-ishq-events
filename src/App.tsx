@@ -11,6 +11,7 @@ import Booking from "./pages/Booking";
 import Login from "./pages/Login";
 import ClientDashboard from "./pages/ClientDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import EventBuilder from "./pages/EventBuilder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
