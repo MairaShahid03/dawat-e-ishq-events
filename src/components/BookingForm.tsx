@@ -9,11 +9,13 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import LocationPicker from "@/components/LocationPicker";
+import AISuggestions from "@/components/AISuggestions";
 
 const STEPS = [
   "Basic Info", "Category", "Sub-Categories", "Event Details",
-  "Package", "Destination", "Services", "Flowers",
-  "Theme", "Cost Estimate", "Notes", "Review & Submit",
+  "Location", "Package", "Destination", "Services", "Flowers",
+  "Theme", "AI Suggestions", "Cost Estimate", "Notes", "Review & Submit",
 ];
 
 const formatPKR = (n: number) => `PKR ${n.toLocaleString()}`;
