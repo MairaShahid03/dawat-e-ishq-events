@@ -246,7 +246,7 @@ const BookingForm = () => {
           </div>
         </div>
       );
-      case 5: return (
+      case 6: return (
         <div className="space-y-5">
           <h3 className="font-heading text-2xl text-ivory mb-2">Destination Event</h3>
           <label className="flex items-center gap-3 cursor-pointer">
@@ -269,7 +269,7 @@ const BookingForm = () => {
           )}
         </div>
       );
-      case 6: return (
+      case 7: return (
         <div>
           <h3 className="font-heading text-2xl text-ivory mb-4">Service Add-ons</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -292,7 +292,7 @@ const BookingForm = () => {
           </div>
         </div>
       );
-      case 7: return (
+      case 8: return (
         <div>
           <h3 className="font-heading text-2xl text-ivory mb-4">Floral Preferences</h3>
           <p className="text-ivory/40 text-sm mb-4">Select your preferred flowers for decoration</p>
@@ -322,7 +322,7 @@ const BookingForm = () => {
           )}
         </div>
       );
-      case 8: return (
+      case 9: return (
         <div>
           <h3 className="font-heading text-2xl text-ivory mb-4">Select Theme</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -346,7 +346,24 @@ const BookingForm = () => {
           )}
         </div>
       );
-      case 9: return (
+      case 10: return (
+        <div>
+          <h3 className="font-heading text-2xl text-ivory mb-4">Smart Suggestions</h3>
+          <p className="text-ivory/40 text-sm mb-4">Based on your event details, here are our recommendations</p>
+          <AISuggestions
+            budget={data.budget}
+            guests={data.guests}
+            category={data.category}
+            onSelectTheme={(themeId) => update("theme", themeId)}
+            onSelectFlower={(flowerId) => {
+              if (!data.flowers.includes(flowerId)) {
+                toggleArray("flowers", flowerId);
+              }
+            }}
+          />
+        </div>
+      );
+      case 11: return (
         <div className="text-center">
           <h3 className="font-heading text-2xl text-ivory mb-6">Estimated Cost</h3>
           <div className="glass-dark rounded-2xl p-8 inline-block">
@@ -361,13 +378,13 @@ const BookingForm = () => {
           </div>
         </div>
       );
-      case 10: return (
+      case 12: return (
         <div>
           <h3 className="font-heading text-2xl text-ivory mb-4">Special Notes</h3>
           <textarea value={data.notes} onChange={(e) => update("notes", e.target.value)} rows={5} className={inputClass + " resize-none"} placeholder="Any special instructions, dietary requirements, cultural preferences..." />
         </div>
       );
-      case 11: return (
+      case 13: return (
         <div>
           <h3 className="font-heading text-2xl text-ivory mb-6">Review Your Booking</h3>
           <div className="space-y-3 text-sm">
@@ -380,6 +397,7 @@ const BookingForm = () => {
               ["Date", data.eventDate],
               ["Guests", data.guests.toString()],
               ["Budget", formatPKR(data.budget)],
+              ["Location", data.location || "Not specified"],
               ["Package", PACKAGES.find((p) => p.id === data.packageType)?.label || ""],
               ["Destination", data.isDestination ? data.destinationCity : "No"],
               ["Services", data.services.join(", ") || "None"],
