@@ -28,7 +28,9 @@ export type Database = {
           guests: number | null
           id: string
           is_destination: boolean | null
+          latitude: number | null
           location: string | null
+          longitude: number | null
           notes: string | null
           package_type: string | null
           phone: string | null
@@ -53,7 +55,9 @@ export type Database = {
           guests?: number | null
           id?: string
           is_destination?: boolean | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           notes?: string | null
           package_type?: string | null
           phone?: string | null
@@ -78,7 +82,9 @@ export type Database = {
           guests?: number | null
           id?: string
           is_destination?: boolean | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           notes?: string | null
           package_type?: string | null
           phone?: string | null

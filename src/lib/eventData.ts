@@ -77,6 +77,9 @@ export interface BookingFormData {
   isDestination: boolean;
   destinationCity: string;
   venuePreference: string;
+  location: string;
+  latitude: number | null;
+  longitude: number | null;
   services: string[];
   theme: string;
   customTheme: string;
@@ -98,6 +101,9 @@ export const initialFormData: BookingFormData = {
   isDestination: false,
   destinationCity: "",
   venuePreference: "",
+  location: "",
+  latitude: null,
+  longitude: null,
   services: [],
   theme: "",
   customTheme: "",
