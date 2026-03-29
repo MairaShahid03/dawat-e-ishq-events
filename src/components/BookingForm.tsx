@@ -58,7 +58,8 @@ const BookingForm = () => {
       case 1: return !!data.category;
       case 2: return data.subCategories.length > 0;
       case 3: return !!data.eventDate && data.guests > 0;
-      case 4: return !!data.packageType;
+      case 4: return true; // location optional
+      case 5: return !!data.packageType;
       default: return true;
     }
   };
