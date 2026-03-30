@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ChevronLeft, ChevronRight, Sparkles, Loader2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Sparkles, Loader2, CalendarDays, Plus, Minus } from "lucide-react";
 import {
   BookingFormData, initialFormData, EVENT_CATEGORIES, SUB_CATEGORIES,
-  PACKAGES, SERVICES_ADDONS, THEMES, FLOWERS, EventCategory,
+  SERVICES_ADDONS, SURPRISE_ADDONS, THEMES, FLOWERS, EventCategory, SubEventDetail,
 } from "@/lib/eventData";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,12 +13,15 @@ import LocationPicker from "@/components/LocationPicker";
 import AISuggestions from "@/components/AISuggestions";
 
 const STEPS = [
-  "Basic Info", "Category", "Sub-Categories", "Event Details",
-  "Location", "Package", "Destination", "Services", "Flowers",
-  "Theme", "AI Suggestions", "Cost Estimate", "Notes", "Review & Submit",
+  "Basic Info", "Category", "Sub-Categories", "Multi-Event Details",
+  "Location", "Services", "Surprise Add-ons", "Theme", "Flowers",
+  "AI Suggestions", "Review & Submit",
 ];
 
 const formatPKR = (n: number) => `PKR ${n.toLocaleString()}`;
+
+const inputClass = "w-full px-4 py-3 rounded-lg border border-gold/20 bg-noir/50 text-ivory font-body placeholder:text-ivory/30 focus:outline-none focus:ring-2 focus:ring-gold/50 transition-all";
+const smallInputClass = "w-full px-3 py-2 rounded-lg border border-gold/20 bg-noir/50 text-ivory font-body text-sm placeholder:text-ivory/30 focus:outline-none focus:ring-1 focus:ring-gold/50 transition-all";
 
 const BookingForm = () => {
   const [searchParams] = useSearchParams();
@@ -36,7 +39,7 @@ const BookingForm = () => {
   const update = (field: keyof BookingFormData, value: any) =>
     setData((p) => ({ ...p, [field]: value }));
 
-  const toggleArray = (field: "services" | "flowers" | "subCategories", val: string) =>
+  const toggleArray = (field: "services" | "flowers" | "subCategories" | "surpriseAddons", val: string) =>
     setData((p) => ({
       ...p,
       [field]: (p[field] as string[]).includes(val)
@@ -44,22 +47,46 @@ const BookingForm = () => {
         : [...(p[field] as string[]), val],
     }));
 
-  const estimateCost = () => {
-    let base = data.budget;
-    const serviceMultiplier = 1 + data.services.length * 0.08;
-    const guestMultiplier = Math.max(1, data.guests / 100);
-    if (data.isDestination) base *= 1.3;
-    return Math.round(base * serviceMultiplier * guestMultiplier * 0.5);
+  // Sync subEvents when subCategories change
+  useEffect(() => {
+    setData((prev) => {
+      const newSubEvents = prev.subCategories.map((name) => {
+        const existing = prev.subEvents.find((e) => e.name === name);
+        return existing || { name, date: "", guests: 100, budget: 200000, theme: "", flowers: [] };
+      });
+      return { ...prev, subEvents: newSubEvents };
+    });
+  }, [data.subCategories.join(",")]);
+
+  const updateSubEvent = (index: number, field: keyof SubEventDetail, value: any) => {
+    setData((prev) => {
+      const updated = [...prev.subEvents];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, subEvents: updated };
+    });
   };
+
+  const toggleSubEventFlower = (index: number, flowerId: string) => {
+    setData((prev) => {
+      const updated = [...prev.subEvents];
+      const current = updated[index].flowers;
+      updated[index] = {
+        ...updated[index],
+        flowers: current.includes(flowerId) ? current.filter((f) => f !== flowerId) : [...current, flowerId],
+      };
+      return { ...prev, subEvents: updated };
+    });
+  };
+
+  const totalBudget = data.subEvents.reduce((sum, e) => sum + e.budget, 0);
+  const totalGuests = Math.max(...data.subEvents.map((e) => e.guests), 0);
 
   const canNext = () => {
     switch (step) {
       case 0: return data.name && data.email && data.phone;
       case 1: return !!data.category;
       case 2: return data.subCategories.length > 0;
-      case 3: return !!data.eventDate && data.guests > 0;
-      case 4: return true; // location optional
-      case 5: return !!data.packageType;
+      case 3: return data.subEvents.every((e) => e.date && e.guests > 0 && e.budget > 0);
       default: return true;
     }
   };
@@ -71,27 +98,24 @@ const BookingForm = () => {
     }
     setSubmitting(true);
     try {
+      const primaryEvent = data.subEvents[0];
       const { error } = await supabase.from("bookings").insert({
         user_id: user.id,
         full_name: data.name,
         email: data.email,
         phone: data.phone,
         sub_categories: data.subCategories,
-        event_date: data.eventDate,
-        guests: data.guests,
-        budget_pkr: data.budget,
-        package_type: data.packageType,
-        is_destination: data.isDestination,
-        destination_city: data.destinationCity,
-        venue_preference: data.venuePreference,
+        event_date: primaryEvent?.date || data.eventDate,
+        guests: totalGuests,
+        budget_pkr: totalBudget,
         location: data.location,
         latitude: data.latitude,
         longitude: data.longitude,
-        services: data.services,
+        services: [...data.services, ...data.surpriseAddons],
         flowers: data.flowers,
         theme: data.theme === "custom" ? data.customTheme : THEMES.find(t => t.id === data.theme)?.label || data.theme,
         custom_theme: data.customTheme,
-        notes: data.notes,
+        notes: `Multi-event details: ${data.subEvents.map(e => `${e.name}: ${e.date}, ${e.guests} guests, ${formatPKR(e.budget)}`).join(" | ")}`,
         status: "pending",
       });
       if (error) throw error;
@@ -105,20 +129,45 @@ const BookingForm = () => {
   };
 
   if (submitted) {
+    const nextEventDate = data.subEvents
+      .map((e) => new Date(e.date))
+      .filter((d) => d > new Date())
+      .sort((a, b) => a.getTime() - b.getTime())[0];
+
+    const daysUntil = nextEventDate
+      ? Math.ceil((nextEventDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      : null;
+
     return (
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-20">
         <div className="w-20 h-20 bg-gold/20 rounded-full flex items-center justify-center mx-auto mb-6">
           <Sparkles className="text-gold" size={36} />
         </div>
         <h2 className="font-heading text-3xl text-foreground mb-3">Booking Confirmed!</h2>
-        <p className="text-muted-foreground max-w-md mx-auto">
+        <p className="text-muted-foreground max-w-md mx-auto mb-8">
           Thank you, {data.name}. Our team will reach out within 24 hours.
         </p>
+
+        {/* Event Countdown */}
+        {daysUntil !== null && daysUntil > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="glass-dark rounded-2xl p-8 inline-block"
+          >
+            <CalendarDays className="text-gold mx-auto mb-3" size={32} />
+            <p className="text-ivory/60 text-sm mb-2">Your event is in</p>
+            <p className="font-heading text-5xl text-gold font-bold">{daysUntil}</p>
+            <p className="text-ivory/60 text-sm mt-1">days</p>
+            <p className="text-ivory/40 text-xs mt-3">
+              {data.subEvents.find((e) => new Date(e.date).getTime() === nextEventDate.getTime())?.name} — {nextEventDate.toLocaleDateString("en-PK", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+            </p>
+          </motion.div>
+        )}
       </motion.div>
     );
   }
-
-  const inputClass = "w-full px-4 py-3 rounded-lg border border-gold/20 bg-noir/50 text-ivory font-body placeholder:text-ivory/30 focus:outline-none focus:ring-2 focus:ring-gold/50 transition-all";
 
   const renderStep = () => {
     switch (step) {
@@ -166,7 +215,7 @@ const BookingForm = () => {
       case 2: return (
         <div>
           <h3 className="font-heading text-2xl text-ivory mb-2">Select Sub-Categories</h3>
-          <p className="text-ivory/40 text-sm mb-4">You can select multiple</p>
+          <p className="text-ivory/40 text-sm mb-4">Select multiple events for your celebration</p>
           {data.category && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {SUB_CATEGORIES[data.category as EventCategory].map((sub) => (
@@ -192,22 +241,80 @@ const BookingForm = () => {
         </div>
       );
       case 3: return (
-        <div className="space-y-5">
-          <h3 className="font-heading text-2xl text-ivory mb-2">Event Details</h3>
-          <div>
-            <label className="text-sm text-ivory/60 mb-1 block">Event Date</label>
-            <input type="date" value={data.eventDate} onChange={(e) => update("eventDate", e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <label className="text-sm text-ivory/60 mb-1 block">Number of Guests: {data.guests}</label>
-            <input type="range" min={10} max={2000} step={10} value={data.guests} onChange={(e) => update("guests", +e.target.value)} className="w-full accent-gold" />
-            <div className="flex justify-between text-xs text-ivory/40"><span>10</span><span>2000</span></div>
-          </div>
-          <div>
-            <label className="text-sm text-ivory/60 mb-1 block">Budget: {formatPKR(data.budget)}</label>
-            <input type="range" min={50000} max={2000000} step={10000} value={data.budget} onChange={(e) => update("budget", +e.target.value)} className="w-full accent-gold" />
-            <div className="flex justify-between text-xs text-ivory/40"><span>PKR 50K</span><span>PKR 20 Lac</span></div>
-          </div>
+        <div className="space-y-6">
+          <h3 className="font-heading text-2xl text-ivory mb-2">Multi-Event Details</h3>
+          <p className="text-ivory/40 text-sm mb-4">Set details for each event individually</p>
+          {data.subEvents.map((evt, i) => (
+            <motion.div
+              key={evt.name}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="border border-gold/20 rounded-xl p-5 space-y-4 bg-noir/30"
+            >
+              <h4 className="font-heading text-lg text-gold">{evt.name}</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs text-ivory/50 mb-1 block">Date</label>
+                  <input type="date" value={evt.date} onChange={(e) => updateSubEvent(i, "date", e.target.value)} className={smallInputClass} />
+                </div>
+                <div>
+                  <label className="text-xs text-ivory/50 mb-1 block">Guests</label>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => updateSubEvent(i, "guests", Math.max(10, evt.guests - 10))} className="w-8 h-8 rounded-lg border border-gold/20 flex items-center justify-center text-ivory/60 hover:border-gold/50">
+                      <Minus size={14} />
+                    </button>
+                    <input type="number" min={10} max={2000} value={evt.guests} onChange={(e) => updateSubEvent(i, "guests", +e.target.value || 10)} className={smallInputClass + " text-center"} />
+                    <button onClick={() => updateSubEvent(i, "guests", Math.min(2000, evt.guests + 10))} className="w-8 h-8 rounded-lg border border-gold/20 flex items-center justify-center text-ivory/60 hover:border-gold/50">
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-ivory/50 mb-1 block">Budget (PKR)</label>
+                  <input type="number" min={50000} step={10000} value={evt.budget} onChange={(e) => updateSubEvent(i, "budget", +e.target.value || 50000)} className={smallInputClass} />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-ivory/50 mb-1 block">Theme</label>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {THEMES.slice(0, 8).map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => updateSubEvent(i, "theme", t.id)}
+                      className={`rounded-lg border overflow-hidden text-xs transition-all ${
+                        evt.theme === t.id ? "border-gold shadow-gold" : "border-gold/10 hover:border-gold/30"
+                      }`}
+                    >
+                      <div className={`h-6 bg-gradient-to-br ${t.color}`} />
+                      <div className="p-1.5 text-ivory/80 bg-noir/60 truncate">{t.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-ivory/50 mb-1 block">Flowers</label>
+                <div className="flex flex-wrap gap-2">
+                  {FLOWERS.slice(0, 6).map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => toggleSubEventFlower(i, f.id)}
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-body transition-all ${
+                        evt.flowers.includes(f.id) ? "border-gold bg-gold/10 text-ivory" : "border-gold/10 text-ivory/50 hover:border-gold/30"
+                      }`}
+                    >
+                      <span>{f.emoji}</span> {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+          {data.subEvents.length > 0 && (
+            <div className="glass-dark rounded-xl p-4 text-center">
+              <p className="text-ivory/50 text-sm">Combined Budget: <span className="text-gold font-semibold">{formatPKR(totalBudget)}</span></p>
+            </div>
+          )}
         </div>
       );
       case 4: return (
@@ -227,49 +334,6 @@ const BookingForm = () => {
         </div>
       );
       case 5: return (
-        <div>
-          <h3 className="font-heading text-2xl text-ivory mb-4">Select Package</h3>
-          <div className="space-y-3">
-            {PACKAGES.map((pkg) => (
-              <button
-                key={pkg.id}
-                onClick={() => update("packageType", pkg.id)}
-                className={`w-full p-5 rounded-xl border-2 text-left transition-all ${
-                  data.packageType === pkg.id ? "border-gold bg-gold/10 shadow-gold" : "border-gold/20 hover:border-gold/50"
-                }`}
-              >
-                <div className="font-heading font-semibold text-ivory">{pkg.label}</div>
-                <div className="text-sm text-ivory/50">{pkg.description}</div>
-                <div className="text-sm text-gold mt-1">{pkg.price}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      );
-      case 6: return (
-        <div className="space-y-5">
-          <h3 className="font-heading text-2xl text-ivory mb-2">Destination Event</h3>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <div onClick={() => update("isDestination", !data.isDestination)} className={`w-12 h-6 rounded-full transition-all ${data.isDestination ? "bg-gold" : "bg-ivory/20"} relative`}>
-              <div className={`w-5 h-5 rounded-full bg-noir absolute top-0.5 transition-all ${data.isDestination ? "left-6" : "left-0.5"}`} />
-            </div>
-            <span className="font-body text-ivory">Is this a destination event?</span>
-          </label>
-          {data.isDestination && (
-            <>
-              <div>
-                <label className="text-sm text-ivory/60 mb-1 block">City / Country</label>
-                <input value={data.destinationCity} onChange={(e) => update("destinationCity", e.target.value)} className={inputClass} placeholder="e.g., Istanbul, Turkey" />
-              </div>
-              <div>
-                <label className="text-sm text-ivory/60 mb-1 block">Venue Preference</label>
-                <input value={data.venuePreference} onChange={(e) => update("venuePreference", e.target.value)} className={inputClass} placeholder="e.g., Beachfront, Banquet Hall" />
-              </div>
-            </>
-          )}
-        </div>
-      );
-      case 7: return (
         <div>
           <h3 className="font-heading text-2xl text-ivory mb-4">Service Add-ons</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -292,37 +356,32 @@ const BookingForm = () => {
           </div>
         </div>
       );
-      case 8: return (
+      case 6: return (
         <div>
-          <h3 className="font-heading text-2xl text-ivory mb-4">Floral Preferences</h3>
-          <p className="text-ivory/40 text-sm mb-4">Select your preferred flowers for decoration</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {FLOWERS.map((f) => (
+          <h3 className="font-heading text-2xl text-ivory mb-2">Surprise Add-ons ✨</h3>
+          <p className="text-ivory/40 text-sm mb-4">Make your event unforgettable with these exclusive extras</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {SURPRISE_ADDONS.map((addon) => (
               <button
-                key={f.id}
-                onClick={() => toggleArray("flowers", f.id)}
-                className={`flex items-center gap-3 p-4 rounded-xl border-2 text-left text-sm font-body transition-all ${
-                  data.flowers.includes(f.id) ? "border-gold bg-gold/10 text-ivory" : "border-gold/20 text-ivory/60 hover:border-gold/50"
+                key={addon.id}
+                onClick={() => toggleArray("surpriseAddons", addon.id)}
+                className={`p-5 rounded-xl border-2 text-left transition-all ${
+                  data.surpriseAddons.includes(addon.id)
+                    ? "border-gold bg-gold/10 shadow-gold"
+                    : "border-gold/20 hover:border-gold/50"
                 }`}
               >
-                <span className="text-lg">{f.emoji}</span>
-                <span>{f.label}</span>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-2xl">{addon.emoji}</span>
+                  <span className="font-heading font-semibold text-ivory">{addon.label}</span>
+                </div>
+                <p className="text-xs text-ivory/50 font-body">{addon.description}</p>
               </button>
             ))}
           </div>
-          {data.flowers.includes("custom") && (
-            <div className="mt-4">
-              <input
-                value={data.customFlower}
-                onChange={(e) => update("customFlower", e.target.value)}
-                className={inputClass}
-                placeholder="Describe your flower preferences..."
-              />
-            </div>
-          )}
         </div>
       );
-      case 9: return (
+      case 7: return (
         <div>
           <h3 className="font-heading text-2xl text-ivory mb-4">Select Theme</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -346,45 +405,46 @@ const BookingForm = () => {
           )}
         </div>
       );
-      case 10: return (
+      case 8: return (
+        <div>
+          <h3 className="font-heading text-2xl text-ivory mb-4">Floral Preferences</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {FLOWERS.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => toggleArray("flowers", f.id)}
+                className={`flex items-center gap-3 p-4 rounded-xl border-2 text-left text-sm font-body transition-all ${
+                  data.flowers.includes(f.id) ? "border-gold bg-gold/10 text-ivory" : "border-gold/20 text-ivory/60 hover:border-gold/50"
+                }`}
+              >
+                <span className="text-lg">{f.emoji}</span>
+                <span>{f.label}</span>
+              </button>
+            ))}
+          </div>
+          {data.flowers.includes("custom") && (
+            <div className="mt-4">
+              <input value={data.customFlower} onChange={(e) => update("customFlower", e.target.value)} className={inputClass} placeholder="Describe your flower preferences..." />
+            </div>
+          )}
+        </div>
+      );
+      case 9: return (
         <div>
           <h3 className="font-heading text-2xl text-ivory mb-4">Smart Suggestions</h3>
-          <p className="text-ivory/40 text-sm mb-4">Based on your event details, here are our recommendations</p>
+          <p className="text-ivory/40 text-sm mb-4">Based on your event details</p>
           <AISuggestions
-            budget={data.budget}
-            guests={data.guests}
+            budget={totalBudget}
+            guests={totalGuests}
             category={data.category}
             onSelectTheme={(themeId) => update("theme", themeId)}
             onSelectFlower={(flowerId) => {
-              if (!data.flowers.includes(flowerId)) {
-                toggleArray("flowers", flowerId);
-              }
+              if (!data.flowers.includes(flowerId)) toggleArray("flowers", flowerId);
             }}
           />
         </div>
       );
-      case 11: return (
-        <div className="text-center">
-          <h3 className="font-heading text-2xl text-ivory mb-6">Estimated Cost</h3>
-          <div className="glass-dark rounded-2xl p-8 inline-block">
-            <p className="text-ivory/60 text-sm mb-2">Estimated Total</p>
-            <p className="font-heading text-4xl md:text-5xl text-gold font-bold">{formatPKR(estimateCost())}</p>
-            <p className="text-ivory/40 text-xs mt-2">*Final cost may vary based on specifics</p>
-          </div>
-          <div className="mt-6 text-sm text-ivory/50 space-y-1">
-            <p>Guests: {data.guests} | Package: {data.packageType}</p>
-            <p>Services: {data.services.length} add-ons | Flowers: {data.flowers.length} selections</p>
-            {data.isDestination && <p>Destination: {data.destinationCity}</p>}
-          </div>
-        </div>
-      );
-      case 12: return (
-        <div>
-          <h3 className="font-heading text-2xl text-ivory mb-4">Special Notes</h3>
-          <textarea value={data.notes} onChange={(e) => update("notes", e.target.value)} rows={5} className={inputClass + " resize-none"} placeholder="Any special instructions, dietary requirements, cultural preferences..." />
-        </div>
-      );
-      case 13: return (
+      case 10: return (
         <div>
           <h3 className="font-heading text-2xl text-ivory mb-6">Review Your Booking</h3>
           <div className="space-y-3 text-sm">
@@ -393,27 +453,28 @@ const BookingForm = () => {
               ["Email", data.email],
               ["Phone", data.phone],
               ["Category", EVENT_CATEGORIES.find((c) => c.value === data.category)?.label || ""],
-              ["Sub-Categories", data.subCategories.join(", ")],
-              ["Date", data.eventDate],
-              ["Guests", data.guests.toString()],
-              ["Budget", formatPKR(data.budget)],
+              ["Events", data.subCategories.join(", ")],
               ["Location", data.location || "Not specified"],
-              ["Package", PACKAGES.find((p) => p.id === data.packageType)?.label || ""],
-              ["Destination", data.isDestination ? data.destinationCity : "No"],
               ["Services", data.services.join(", ") || "None"],
+              ["Surprise Add-ons", data.surpriseAddons.map(id => SURPRISE_ADDONS.find(a => a.id === id)?.label).filter(Boolean).join(", ") || "None"],
               ["Flowers", data.flowers.map(f => FLOWERS.find(fl => fl.id === f)?.label).filter(Boolean).join(", ") || "None"],
               ["Theme", THEMES.find((t) => t.id === data.theme)?.label || "None"],
-              ["Estimated Cost", formatPKR(estimateCost())],
+              ["Combined Budget", formatPKR(totalBudget)],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between py-2 border-b border-gold/10">
                 <span className="text-ivory/50">{label}</span>
                 <span className="font-medium text-ivory text-right max-w-[60%]">{value}</span>
               </div>
             ))}
-            {data.notes && (
-              <div className="pt-2">
-                <span className="text-ivory/50">Notes:</span>
-                <p className="mt-1 text-ivory">{data.notes}</p>
+            {data.subEvents.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-ivory/50">Event Breakdown:</p>
+                {data.subEvents.map((evt) => (
+                  <div key={evt.name} className="glass-dark rounded-lg p-3 text-xs">
+                    <span className="text-gold font-semibold">{evt.name}</span>
+                    <span className="text-ivory/40"> — {evt.date} | {evt.guests} guests | {formatPKR(evt.budget)}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
