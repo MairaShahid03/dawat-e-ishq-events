@@ -16,12 +16,6 @@ export const SUB_CATEGORIES: Record<EventCategory, string[]> = {
   custom: ["Corporate Event", "Anniversary", "Engagement", "Qawali Night", "Other"],
 };
 
-export const PACKAGES = [
-  { id: "full", label: "Full Event Planning", description: "End-to-end event management", price: "Starting PKR 300,000" },
-  { id: "partial", label: "Partial Planning", description: "We handle specific aspects", price: "Starting PKR 150,000" },
-  { id: "custom", label: "Custom Planning", description: "Tailored to your needs", price: "Custom Quote" },
-];
-
 export const SERVICES_ADDONS = [
   "Catering",
   "Photography / Videography",
@@ -31,6 +25,15 @@ export const SERVICES_ADDONS = [
   "Invitations & Stationery",
   "Transportation",
   "Accommodation",
+];
+
+export const SURPRISE_ADDONS = [
+  { id: "qawali-night", label: "Qawali Night", emoji: "🎶", description: "Live qawali performance with traditional musicians" },
+  { id: "fireworks", label: "Fireworks Display", emoji: "🎆", description: "Grand fireworks finale for your event" },
+  { id: "special-entry", label: "Special Entry", emoji: "🚪", description: "Dramatic bridal/groom entry with effects" },
+  { id: "drone-light-show", label: "Drone Light Show", emoji: "✨", description: "Modern drone-based light choreography" },
+  { id: "live-band", label: "Live Band", emoji: "🎸", description: "Professional live music performance" },
+  { id: "ice-sculpture", label: "Ice Sculpture", emoji: "🧊", description: "Custom carved ice centerpiece" },
 ];
 
 export const THEMES = [
@@ -64,23 +67,30 @@ export const FLOWERS = [
   { id: "custom", label: "Custom Flower Request", emoji: "✨" },
 ];
 
+export interface SubEventDetail {
+  name: string;
+  date: string;
+  guests: number;
+  budget: number;
+  theme: string;
+  flowers: string[];
+}
+
 export interface BookingFormData {
   name: string;
   email: string;
   phone: string;
   category: EventCategory | "";
   subCategories: string[];
+  subEvents: SubEventDetail[];
   eventDate: string;
   guests: number;
   budget: number;
-  packageType: string;
-  isDestination: boolean;
-  destinationCity: string;
-  venuePreference: string;
   location: string;
   latitude: number | null;
   longitude: number | null;
   services: string[];
+  surpriseAddons: string[];
   theme: string;
   customTheme: string;
   flowers: string[];
@@ -94,17 +104,15 @@ export const initialFormData: BookingFormData = {
   phone: "",
   category: "",
   subCategories: [],
+  subEvents: [],
   eventDate: "",
   guests: 100,
   budget: 500000,
-  packageType: "",
-  isDestination: false,
-  destinationCity: "",
-  venuePreference: "",
   location: "",
   latitude: null,
   longitude: null,
   services: [],
+  surpriseAddons: [],
   theme: "",
   customTheme: "",
   flowers: [],
