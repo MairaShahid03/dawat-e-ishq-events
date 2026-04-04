@@ -8,8 +8,6 @@ interface Message {
   text: string;
 }
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
-
 const SYSTEM_PROMPT = `
 You are the luxury AI Concierge for Dawat-e-Ishq, a premium event planning platform in Pakistan.
 Your tone is elegant, helpful, and highly professional.
@@ -21,12 +19,12 @@ Suggest themes, decor, and ideas when relevant.
 const FloatingChatbot = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>(([
+  const [messages, setMessages] = useState<Message[]>([
     {
       role: "model",
       text: "Welcome to Dawat-e-Ishq! How may I assist you with your premium event today?",
     },
-  ]));
+  ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -40,19 +38,7 @@ const FloatingChatbot = () => {
   }, [messages, isOpen]);
 
   const handleSend = async () => {
-    if (!input.trim() || !API_KEY) {
-      if (!API_KEY) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "user", text: input },
-          {
-            role: "model",
-            text: "Please add your Gemini API key in Vercel environment variables.",
-          },
-        ]);
-      }
-      return;
-    }
+    if (!input.trim()) return;
 
     const userMessage = input.trim();
     setInput("");
@@ -60,53 +46,21 @@ const FloatingChatbot = () => {
     setIsLoading(true);
 
     try {
-     const response = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: "user",
-                parts: [
-                  {
-                    text: `${SYSTEM_PROMPT}\nUser: ${userMessage}`,
-                  },
-                ],
-              },
-            ],
-          }),
-        }
-      );
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: `${SYSTEM_PROMPT}\nUser: ${userMessage}`,
+        }),
+      });
 
       const data = await response.json();
-      console.log("Gemini response:", data);
-
-      if (data.error) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "model", text: "API Error: " + data.error.message },
-        ]);
-        return;
-      }
-
-      const responseText =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!responseText) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "model", text: "No response from AI. Try again." },
-        ]);
-        return;
-      }
 
       setMessages((prev) => [
         ...prev,
-        { role: "model", text: responseText },
+        { role: "model", text: data.reply },
       ]);
     } catch (error) {
       console.error(error);
@@ -114,7 +68,7 @@ const FloatingChatbot = () => {
         ...prev,
         {
           role: "model",
-          text: "I am having trouble connecting. Please try again.",
+          text: "Server error. Please try again.",
         },
       ]);
     } finally {
