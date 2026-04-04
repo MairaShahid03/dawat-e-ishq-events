@@ -7,6 +7,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import { supabase } from "@/integrations/supabase/client";
 import heroMehndi from "@/assets/hero-mehndi.jpg";
 import heroBaraat from "@/assets/hero-baraat.jpg";
+import ReelsSection from "@/components/ReelsSection";
 
 const GALLERY_CATEGORIES = [
   "baraat", "birthday", "dua-e-khair", "mayoun", "mehndi", "nikkah", "others", "engagement", "qawali night",
@@ -257,6 +258,8 @@ const Gallery = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ReelsSection />
 
       <Footer />
       <WhatsAppButton />

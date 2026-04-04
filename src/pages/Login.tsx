@@ -98,7 +98,7 @@ const Login = () => {
 
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-ivory/40" size={18} />
-                <input type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => update("password", e.target.value)} placeholder="Password" required minLength={6} className={inputClass + " pr-12"} />
+                <input type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => update("password", e.target.value)} placeholder="Password" required minLength={6} className={inputClass + " pr-12 [&::-ms-reveal]:hidden [&::-webkit-reveal]:hidden"} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-ivory/40 hover:text-ivory/70">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   LayoutDashboard, CalendarDays, Users, BarChart3, Settings, Image,
   CheckCircle, XCircle, Eye, Clock, Menu, X as XIcon,
-  TrendingUp, DollarSign, Calendar, FileText, MessageCircle,
+  TrendingUp, DollarSign, Calendar, FileText, MessageCircle, MessageSquare,
   Upload, Trash2, Loader2, ChevronLeft, ChevronRight, LogOut, UserCog
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { FLOWERS, THEMES } from "@/lib/eventData";
 
-type Tab = "overview" | "bookings" | "calendar" | "gallery" | "clients" | "analytics" | "settings";
+type Tab = "overview" | "bookings" | "meetings" | "calendar" | "gallery" | "clients" | "analytics" | "settings";
 
 const statusColors: Record<string, string> = {
   pending: "text-amber-400 bg-amber-500/10",
@@ -30,6 +30,7 @@ const AdminDashboard = () => {
   const [tab, setTab] = useState<Tab>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [allMeetings, setAllMeetings] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
@@ -43,15 +44,24 @@ const AdminDashboard = () => {
   // Calendar state
   const [calendarDate, setCalendarDate] = useState(new Date());
 
+  // Meeting state
+  const [meetingFormOpen, setMeetingFormOpen] = useState(false);
+  const [meetingForm, setMeetingForm] = useState({ date: "", time: "", location: "Online / Google Meet", notes: "Please join the meeting exactly on time." });
+
   // Settings state
   const [settingsForm, setSettingsForm] = useState({ full_name: "", phone: "", email: "" });
   const [passwords, setPasswords] = useState({ newPassword: "", confirmPassword: "" });
+
+  // Reschedule state
+  const [rescheduleMeetingId, setRescheduleMeetingId] = useState<string | null>(null);
+  const [rescheduleForm, setRescheduleForm] = useState({ date: "", time: "", notes: "" });
 
   const GALLERY_CATS = ["baraat","birthday","dua-e-khair","mayoun","mehndi","nikkah","others","engagement","qawali night"];
 
   const navItems: { key: Tab; label: string; icon: any }[] = [
     { key: "overview", label: "Dashboard", icon: LayoutDashboard },
     { key: "bookings", label: "Bookings", icon: FileText },
+    { key: "meetings", label: "Meetings", icon: MessageSquare },
     { key: "calendar", label: "Calendar", icon: CalendarDays },
     { key: "gallery", label: "Gallery", icon: Image },
     { key: "clients", label: "Clients", icon: Users },
@@ -69,6 +79,7 @@ const AdminDashboard = () => {
     if (user && isAdmin) {
       fetchBookings();
       fetchProfiles();
+      fetchMeetings();
     }
   }, [user, isAdmin]);
 
@@ -98,6 +109,11 @@ const AdminDashboard = () => {
     setProfiles(data || []);
   };
 
+  const fetchMeetings = async () => {
+    const { data } = await supabase.from("meetings").select("*").order("created_at", { ascending: false });
+    setAllMeetings(data || []);
+  };
+
   const fetchGalleryImages = async () => {
     setGalleryLoading(true);
     const { data } = await supabase.from("gallery").select("*").ilike("category", galleryCategory);
@@ -111,6 +127,68 @@ const AdminDashboard = () => {
     toast.success(`Booking ${status}`);
     fetchBookings();
     if (selectedBooking?.id === id) setSelectedBooking({ ...selectedBooking, status });
+  };
+
+  const submitMeetingRequest = async () => {
+    if (!meetingForm.date || !meetingForm.time) {
+      toast.error("Please select date and time");
+      return;
+    }
+    
+    // Combine date and time
+    const meetingDateTime = `${meetingForm.date}T${meetingForm.time}`;
+    
+    const { error } = await supabase.from("meetings").insert({
+      booking_id: selectedBooking.id,
+      user_id: selectedBooking.user_id,
+      meeting_date: meetingDateTime,
+      meeting_location: meetingForm.location,
+      admin_note: meetingForm.notes,
+      status: "pending_client",
+      user_response: "pending"
+    });
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Meeting scheduled. The client can now accept it.");
+      setMeetingFormOpen(false);
+      setMeetingForm({ date: "", time: "", location: "Online / Google Meet", notes: "Please join the meeting exactly on time." });
+      fetchMeetings();
+    }
+  };
+
+  const respondToMeeting = async (meetingId: string, response: string, reason?: string) => {
+    const { error } = await supabase.from("meetings").update({
+      status: response,
+      rejection_reason: reason || null,
+    }).eq("id", meetingId);
+    if (error) toast.error(error.message);
+    else { toast.success(`Meeting ${response}`); fetchMeetings(); }
+  };
+
+  const submitReschedule = async (meetingId: string) => {
+    if (!rescheduleForm.date || !rescheduleForm.time) {
+      toast.error("Please select a date and time");
+      return;
+    }
+    const meetingDateTime = `${rescheduleForm.date}T${rescheduleForm.time}`;
+    
+    // For admin rescheduling, we set status to pending_client
+    const { error } = await supabase.from("meetings").update({
+      meeting_date: meetingDateTime,
+      rejection_reason: rescheduleForm.notes ? `Admin Reschedule Note: ${rescheduleForm.notes}` : null,
+      status: "pending_client",
+      user_response: "pending"
+    }).eq("id", meetingId);
+    
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Reschedule request sent");
+      setRescheduleMeetingId(null);
+      setRescheduleForm({ date: "", time: "", notes: "" });
+      fetchMeetings();
+    }
   };
 
   const openWhatsApp = (booking: any) => {
@@ -422,7 +500,103 @@ const AdminDashboard = () => {
                     </>
                   )}
                 </div>
+                
+                <div className="pt-4 border-t border-gold/10 mt-4">
+                  {meetingFormOpen ? (
+                    <div className="space-y-3 bg-noir border border-gold/10 p-4 rounded-xl">
+                      <h4 className="text-gold font-heading text-sm mb-2">Schedule a Meeting</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-ivory/60 text-xs mb-1 block">Date</label>
+                          <input type="date" value={meetingForm.date} onChange={e => setMeetingForm(p => ({...p, date: e.target.value}))} className={inputClass} />
+                        </div>
+                        <div>
+                          <label className="text-ivory/60 text-xs mb-1 block">Time</label>
+                          <input type="time" value={meetingForm.time} onChange={e => setMeetingForm(p => ({...p, time: e.target.value}))} className={inputClass} />
+                        </div>
+                      </div>
+                      <div>
+                          <label className="text-ivory/60 text-xs mb-1 block">Location / Format</label>
+                          <select value={meetingForm.location} onChange={e => setMeetingForm(p => ({...p, location: e.target.value}))} className={inputClass}>
+                            <option value="Online / Google Meet">Online / Google Meet</option>
+                            <option value="In-Person at Office">In-Person at Office</option>
+                          </select>
+                      </div>
+                      <textarea placeholder="Note for the client..." value={meetingForm.notes} onChange={e => setMeetingForm(p => ({...p, notes: e.target.value}))} className={inputClass + " h-20 resize-none"} />
+                      
+                      <div className="flex gap-3 pt-2">
+                        <button onClick={submitMeetingRequest} className="btn-luxury text-sm py-2 px-4 shadow-none!">Schedule with Client</button>
+                        <button onClick={() => setMeetingFormOpen(false)} className="btn-luxury-outline text-sm py-2 px-4 shadow-none!">Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button onClick={() => setMeetingFormOpen(true)} className="btn-luxury text-sm">
+                      Schedule Meeting
+                    </button>
+                  )}
+                </div>
               </div>
+            </div>
+          )}
+
+          {/* MEETINGS */}
+          {tab === "meetings" && (
+            <div className="space-y-4">
+              {allMeetings.length === 0 ? (
+                <div className="text-center py-20 text-ivory/40">No meetings found</div>
+              ) : allMeetings.map((m) => {
+                const booking = bookings.find(b => b.id === m.booking_id);
+                return (
+                  <div key={m.id} className="bg-noir border border-gold/10 rounded-xl p-5 w-full">
+                    <div className="flex flex-col md:flex-row justify-between md:items-start mb-4 gap-2">
+                      <div>
+                        <h4 className="font-heading text-lg text-gold">{booking?.full_name || "Client"} - Meeting</h4>
+                        <p className="text-ivory/80 text-sm mt-1">{m.admin_note}</p>
+                        <p className="text-ivory/50 text-sm mt-2 font-medium">{m.meeting_date ? new Date(m.meeting_date).toLocaleString() : "TBD"}</p>
+                        {m.meeting_location && <p className="text-ivory/40 text-sm">{m.meeting_location}</p>}
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs self-start ${
+                        m.status === "accepted" ? "text-emerald-400 bg-emerald-500/10" :
+                        m.status === "rejected" ? "text-red-400 bg-red-500/10" :
+                        "text-emerald-400 bg-emerald-500/10"
+                      }`}>{m.status}</span>
+                    </div>
+                    {m.status === "pending_admin" && (
+                      rescheduleMeetingId === m.id ? (
+                        <div className="mt-4 border-t border-gold/10 pt-4 space-y-3">
+                          <h4 className="text-gold font-heading text-sm mb-2">Reschedule Meeting</h4>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-ivory/60 text-xs mb-1 block">New Date</label>
+                              <input type="date" value={rescheduleForm.date} onChange={e => setRescheduleForm(p => ({...p, date: e.target.value}))} className={inputClass} />
+                            </div>
+                            <div>
+                              <label className="text-ivory/60 text-xs mb-1 block">New Time</label>
+                              <input type="time" value={rescheduleForm.time} onChange={e => setRescheduleForm(p => ({...p, time: e.target.value}))} className={inputClass} />
+                            </div>
+                          </div>
+                          <textarea placeholder="Notes (Optional)" value={rescheduleForm.notes} onChange={e => setRescheduleForm(p => ({...p, notes: e.target.value}))} className={inputClass + " h-20 resize-none"} />
+                          <div className="flex gap-3 pt-2">
+                            <button onClick={() => submitReschedule(m.id)} className="btn-luxury text-xs py-2 px-4 shadow-none!">Send Request</button>
+                            <button onClick={() => setRescheduleMeetingId(null)} className="btn-luxury-outline text-xs py-2 px-4 border-red-400 text-red-400 hover:bg-red-400 hover:text-noir shadow-none!">Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-3 mt-4 border-t border-gold/5 pt-4">
+                          <button onClick={() => respondToMeeting(m.id, "accepted")} className="btn-luxury text-xs py-2 px-4 shadow-none!">Accept</button>
+                          <button onClick={() => setRescheduleMeetingId(m.id)} className="btn-luxury text-xs py-2 px-4 bg-transparent border border-gold text-gold hover:bg-gold/10 shadow-none! rounded-lg font-body font-medium transition-all">Reschedule</button>
+                          <button onClick={() => {
+                            if (confirm("Are you sure you want to reject this meeting?")) respondToMeeting(m.id, "rejected");
+                          }} className="btn-luxury-outline text-xs py-2 px-4 border-red-400 text-red-400 hover:bg-red-400 hover:text-noir shadow-none!">Reject</button>
+                        </div>
+                      )
+                    )}
+                    {m.status === "pending_client" && (
+                      <div className="mt-4 text-xs text-ivory/40 italic">Waiting for Client to respond...</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 

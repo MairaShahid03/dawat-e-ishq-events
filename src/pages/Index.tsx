@@ -17,12 +17,7 @@ const highlights = [
   { src: heroIftar, label: "Ramadan Setups" },
 ];
 
-const videoReels = [
-  { id: 1, title: "Mehndi Night Highlights", thumbnail: heroMehndi, category: "Mehndi", views: "12K" },
-  { id: 2, title: "Royal Baraat Setup", thumbnail: heroBaraat, category: "Baraat", views: "8.5K" },
-  { id: 3, title: "Ramadan Iftar Decor", thumbnail: heroIftar, category: "Iftar", views: "6.2K" },
-  { id: 4, title: "Walima Grand Stage", thumbnail: heroMehndi, category: "Walima", views: "15K" },
-];
+
 
 const trendingEvents = [
   { name: "Royal Gold Wedding", bookings: 142, trend: "+28%", theme: "royal-gold" },
@@ -37,24 +32,14 @@ const popularPackages = [
   { name: "Destination Wedding", price: "PKR 800,000+", popularity: 72 },
 ];
 
-const themePreviewPairs: { id: string; before: string; after: string }[] = [
-  { id: "royal-gold", before: "Plain venue hall with basic lighting", after: "Opulent gold drapes, crystal chandeliers, royal stage" },
-  { id: "floral-pastel", before: "Empty banquet space", after: "Lush pastel florals, soft lighting, elegant arches" },
-  { id: "mughal", before: "Standard event area", after: "Mughal arches, emerald & gold decor, lanterns" },
-  { id: "arabian-nights", before: "Basic outdoor setup", after: "Tented pavilion, purple drapes, moroccan lanterns" },
-];
-
 const Index = () => {
-  const [previewTheme, setPreviewTheme] = useState<string | null>(null);
-  const [showAfter, setShowAfter] = useState(false);
-
   return (
     <div className="min-h-screen">
       <Navbar />
       <HeroSection />
 
       {/* Introduction */}
-      <section className="section-padding bg-background">
+      <section className="section-padding bg-noir">
         <div className="container mx-auto text-center max-w-3xl">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <p className="text-gold font-heading text-sm tracking-[0.3em] uppercase mb-3">About Us</p>
@@ -93,105 +78,10 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Video / Reels Section */}
-      <section className="section-padding bg-background">
-        <div className="container mx-auto">
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-            <p className="text-gold font-heading text-sm tracking-[0.3em] uppercase mb-3">Watch & Explore</p>
-            <h2 className="font-heading text-3xl md:text-4xl text-foreground font-bold">Event Reels</h2>
-            <div className="gold-divider mt-4" />
-          </motion.div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {videoReels.map((reel, i) => (
-              <motion.div
-                key={reel.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="group relative aspect-[9/16] rounded-2xl overflow-hidden cursor-pointer"
-              >
-                <img src={reel.thumbnail} alt={reel.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-noir/90 via-noir/30 to-noir/10 group-hover:from-noir/70 transition-all" />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-14 h-14 rounded-full bg-gold/90 flex items-center justify-center">
-                    <Play size={24} className="text-noir ml-1" />
-                  </div>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <span className="text-gold text-xs font-heading tracking-wider uppercase">{reel.category}</span>
-                  <p className="text-ivory font-body text-sm font-medium mt-1">{reel.title}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Eye size={12} className="text-ivory/40" />
-                    <span className="text-ivory/40 text-xs">{reel.views} views</span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Theme Preview Mode */}
-      <section className="section-padding bg-noir">
-        <div className="container mx-auto">
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-            <p className="text-gold font-heading text-sm tracking-[0.3em] uppercase mb-3">Visualize Your Event</p>
-            <h2 className="font-heading text-3xl md:text-4xl text-ivory font-bold">Theme Preview</h2>
-            <p className="text-ivory/50 font-body mt-3">Select a theme and toggle between Before & After</p>
-          </motion.div>
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
-            {themePreviewPairs.map((tp) => {
-              const theme = THEMES.find((t) => t.id === tp.id);
-              return (
-                <button
-                  key={tp.id}
-                  onClick={() => { setPreviewTheme(tp.id); setShowAfter(false); }}
-                  className={`px-5 py-2.5 rounded-full border font-body text-sm transition-all ${
-                    previewTheme === tp.id ? "border-gold bg-gold/15 text-ivory" : "border-ivory/20 text-ivory/50 hover:border-gold/50"
-                  }`}
-                >
-                  {theme?.label}
-                </button>
-              );
-            })}
-          </div>
-          {previewTheme && (() => {
-            const pair = themePreviewPairs.find((p) => p.id === previewTheme)!;
-            const theme = THEMES.find((t) => t.id === previewTheme)!;
-            return (
-              <motion.div key={previewTheme} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto">
-                <div className="flex justify-center gap-4 mb-6">
-                  <button onClick={() => setShowAfter(false)} className={`px-6 py-2 rounded-full font-body text-sm transition-all ${!showAfter ? "bg-ivory/10 text-ivory border border-ivory/30" : "text-ivory/40 border border-transparent"}`}>Before</button>
-                  <button onClick={() => setShowAfter(true)} className={`px-6 py-2 rounded-full font-body text-sm transition-all ${showAfter ? "bg-gold/15 text-gold border border-gold/40" : "text-ivory/40 border border-transparent"}`}>After ✨</button>
-                </div>
-                <motion.div
-                  key={showAfter ? "after" : "before"}
-                  initial={{ opacity: 0, rotateY: 90 }}
-                  animate={{ opacity: 1, rotateY: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="rounded-2xl overflow-hidden border border-gold/20"
-                >
-                  <div className={`h-64 md:h-80 bg-gradient-to-br ${showAfter ? theme.color : "from-zinc-700 to-zinc-900"} flex items-center justify-center relative`}>
-                    {!showAfter && <div className="absolute inset-0 bg-noir/40" />}
-                    <div className="text-center z-10 px-6">
-                      <p className={`font-heading text-2xl md:text-3xl font-bold ${showAfter ? "text-noir" : "text-ivory/60"}`}>
-                        {showAfter ? theme.label : "Plain Venue"}
-                      </p>
-                      <p className={`font-body text-sm mt-2 max-w-md ${showAfter ? "text-noir/70" : "text-ivory/30"}`}>
-                        {showAfter ? pair.after : pair.before}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              </motion.div>
-            );
-          })()}
-        </div>
-      </section>
 
       {/* Popular Events / Trending */}
-      <section className="section-padding bg-background">
+      <section className="section-padding bg-noir">
         <div className="container mx-auto">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
             <p className="text-gold font-heading text-sm tracking-[0.3em] uppercase mb-3">What's Hot</p>
@@ -282,8 +172,8 @@ const Index = () => {
               <a href="https://wa.me/923282681668" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 btn-luxury text-base">
                 <MessageCircle size={20} /> Chat on WhatsApp
               </a>
-              <a href="https://instagram.com/dawateishq" target="_blank" rel="noopener noreferrer" className="block text-gold hover:text-gold-light transition-colors font-body">
-                @dawateishq on Instagram
+              <a href="https://www.instagram.com/dawateeishq.pk?igsh=ZGEwZmJ4NmJuMnlm" target="_blank" rel="noopener noreferrer" className="block text-gold hover:text-gold-light transition-colors font-body">
+                @dawateeishq.pk on Instagram
               </a>
             </div>
           </motion.div>

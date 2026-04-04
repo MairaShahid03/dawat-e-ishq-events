@@ -1,4 +1,4 @@
-import { Heart, Instagram, Phone, Mail, MapPin } from "lucide-react";
+import { Heart, Instagram, Phone, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 
@@ -45,16 +45,14 @@ const Footer = () => (
             <a href="tel:03282681668" className="flex items-center gap-2 hover:text-gold transition-colors">
               <Phone size={14} /> 0328-2681668
             </a>
-            <a href="mailto:info@dawateishq.com" className="flex items-center gap-2 hover:text-gold transition-colors">
-              <Mail size={14} /> info@dawateishq.com
-            </a>
             <span className="flex items-center gap-2">
               <MapPin size={14} /> Karachi, Pakistan
             </span>
           </div>
-          <div className="flex gap-4 mt-4">
-            <a href="https://instagram.com/dawateishq" target="_blank" rel="noopener noreferrer" className="text-ivory/50 hover:text-gold transition-colors">
-              <Instagram size={20} />
+          <div className="mt-4">
+            <a href="https://www.instagram.com/dawateeishq.pk?igsh=ZGEwZmJ4NmJuMnlm" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-ivory/80 hover:text-gold hover:drop-shadow-[0_0_8px_rgba(212,175,55,0.8)] transition-all duration-300 font-body">
+              <Instagram size={20} className="transform hover:scale-110 transition-transform" />
+              <span>@dawateeishq.pk</span>
             </a>
           </div>
         </div>
