@@ -21,12 +21,12 @@ Suggest themes, decor, and ideas when relevant.
 const FloatingChatbot = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<Message[]>(([
     {
       role: "model",
       text: "Welcome to Dawat-e-Ishq! How may I assist you with your premium event today?",
     },
-  ]);
+  ]));
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -61,7 +61,7 @@ const FloatingChatbot = () => {
 
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
         {
           method: "POST",
           headers: {
@@ -85,14 +85,10 @@ const FloatingChatbot = () => {
       const data = await response.json();
       console.log("Gemini response:", data);
 
-      // Handle API errors
       if (data.error) {
         setMessages((prev) => [
           ...prev,
-          {
-            role: "model",
-            text: "API Error: " + data.error.message,
-          },
+          { role: "model", text: "API Error: " + data.error.message },
         ]);
         return;
       }
@@ -103,10 +99,7 @@ const FloatingChatbot = () => {
       if (!responseText) {
         setMessages((prev) => [
           ...prev,
-          {
-            role: "model",
-            text: "I couldn't generate a response. Please try again.",
-          },
+          { role: "model", text: "No response from AI. Try again." },
         ]);
         return;
       }
@@ -193,7 +186,7 @@ const FloatingChatbot = () => {
         )}
       </AnimatePresence>
 
-      {/* Button */}
+      {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-14 h-14 bg-yellow-500 rounded-full flex items-center justify-center"
