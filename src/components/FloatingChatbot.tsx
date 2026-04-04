@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, X, Send, Sparkles, Loader2 } from "lucide-react";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { useLocation } from "react-router-dom";
 
 interface Message {
   role: "user" | "model";
@@ -9,7 +9,6 @@ interface Message {
 }
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(API_KEY);
 
 const SYSTEM_PROMPT = `
 You are the luxury AI Concierge for Dawat-e-Ishq, a premium event planning platform in Pakistan.
@@ -21,8 +20,6 @@ Key details about Dawat-e-Ishq:
 - Use words like "premium", "luxury", "unforgettable", and "elegance" occasionally.
 Keep your responses concise (2-3 sentences max) to fit in a chat widget.
 `;
-
-import { useLocation } from "react-router-dom";
 
 const FloatingChatbot = () => {
   const location = useLocation();
@@ -45,7 +42,11 @@ const FloatingChatbot = () => {
   const handleSend = async () => {
     if (!input.trim() || !API_KEY) {
       if (!API_KEY) {
-        setMessages(prev => [...prev, { role: "user", text: input }, { role: "model", text: "Please add your Gemini API Key to your .env file as VITE_GEMINI_API_KEY to enable me." }]);
+        setMessages(prev => [
+          ...prev,
+          { role: "user", text: input },
+          { role: "model", text: "Please add your Gemini API Key to Vercel environment variables." }
+        ]);
       }
       return;
     }
@@ -56,26 +57,40 @@ const FloatingChatbot = () => {
     setIsLoading(true);
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      
-      const chat = model.startChat({
-        history: [
-          { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
-          { role: "model", parts: [{ text: "Understood. I am ready to assist." }] },
-          ...messages.map(m => ({
-            role: m.role,
-            parts: [{ text: m.text }]
-          }))
-        ],
-      });
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `${SYSTEM_PROMPT}\nUser: ${userMessage}`,
+                  },
+                ],
+              },
+            ],
+          }),
+        }
+      );
 
-      const result = await chat.sendMessage(userMessage);
-      const responseText = result.response.text();
-      
+      const data = await response.json();
+
+      const responseText =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+        "Sorry, I couldn't generate a response.";
+
       setMessages((prev) => [...prev, { role: "model", text: responseText }]);
     } catch (error) {
       console.error(error);
-      setMessages((prev) => [...prev, { role: "model", text: "I apologize, but I am having trouble connecting right now. Please try again later." }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "model", text: "I apologize, but I am having trouble connecting right now. Please try again later." }
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -109,10 +124,10 @@ const FloatingChatbot = () => {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div 
+                  <div
                     className={`max-w-[80%] p-3 rounded-2xl text-sm font-body shadow-md ${
-                      msg.role === "user" 
-                        ? "bg-gold/10 text-ivory border border-gold/20 rounded-tr-sm" 
+                      msg.role === "user"
+                        ? "bg-gold/10 text-ivory border border-gold/20 rounded-tr-sm"
                         : "bg-[#111] text-ivory/90 border border-ivory/10 rounded-tl-sm"
                     }`}
                   >
@@ -120,6 +135,7 @@ const FloatingChatbot = () => {
                   </div>
                 </div>
               ))}
+
               {isLoading && (
                 <div className="flex justify-start">
                   <div className="bg-[#111] border border-ivory/10 text-gold p-3 rounded-2xl rounded-tl-sm">
@@ -127,10 +143,11 @@ const FloatingChatbot = () => {
                   </div>
                 </div>
               )}
+
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Form */}
+            {/* Input */}
             <div className="p-3 border-t border-gold/20 bg-[#111] flex items-center gap-2">
               <input
                 type="text"
@@ -138,13 +155,13 @@ const FloatingChatbot = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="flex-1 bg-noir border border-ivory/10 rounded-full px-4 py-2 text-sm text-ivory focus:outline-none focus:border-gold/50 transition-colors"
+                className="flex-1 bg-noir border border-ivory/10 rounded-full px-4 py-2 text-sm text-ivory focus:outline-none focus:border-gold/50"
                 disabled={isLoading}
               />
-              <button 
+              <button
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
-                className="w-10 h-10 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-gold hover:bg-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-10 h-10 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-gold"
               >
                 <Send size={16} />
               </button>
@@ -153,23 +170,14 @@ const FloatingChatbot = () => {
         )}
       </AnimatePresence>
 
+      {/* Floating Button */}
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 rounded-full bg-gold shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center justify-center border-2 border-noir text-noir hover:shadow-[0_0_30px_rgba(212,175,55,0.6)] transition-all z-50 relative"
+        className="w-14 h-14 rounded-full bg-gold flex items-center justify-center border-2 border-noir text-noir"
       >
-        <AnimatePresence mode="wait">
-          {isOpen ? (
-            <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
-              <X size={24} />
-            </motion.div>
-          ) : (
-            <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
-              <MessageSquare size={24} fill="black" />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
       </motion.button>
     </div>
   );
