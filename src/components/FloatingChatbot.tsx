@@ -13,19 +13,19 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 const SYSTEM_PROMPT = `
 You are the luxury AI Concierge for Dawat-e-Ishq, a premium event planning platform in Pakistan.
 Your tone is elegant, helpful, and highly professional.
-Key details about Dawat-e-Ishq:
-- We specialize in weddings, Ramzan/Iftar setups, and corporate events.
-- Premium packages start at PKR 3,850/head for catering, and complete decor from PKR 150,000.
-- Guide users to the booking page (/booking) if they want to book.
-- Use words like "premium", "luxury", "unforgettable", and "elegance" occasionally.
-Keep your responses concise (2-3 sentences max) to fit in a chat widget.
+We specialize in weddings, mehndi, baraat, walima, corporate and Ramzan events.
+Give short, premium-style answers (2-3 lines max).
+Suggest themes, decor, and ideas when relevant.
 `;
 
 const FloatingChatbot = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: "model", text: "Welcome to Dawat-e-Ishq! How may I assist you with your premium event today?" }
+    {
+      role: "model",
+      text: "Welcome to Dawat-e-Ishq! How may I assist you with your premium event today?",
+    },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -42,10 +42,13 @@ const FloatingChatbot = () => {
   const handleSend = async () => {
     if (!input.trim() || !API_KEY) {
       if (!API_KEY) {
-        setMessages(prev => [
+        setMessages((prev) => [
           ...prev,
           { role: "user", text: input },
-          { role: "model", text: "Please add your Gemini API Key to Vercel environment variables." }
+          {
+            role: "model",
+            text: "Please add your Gemini API key in Vercel environment variables.",
+          },
         ]);
       }
       return;
@@ -67,6 +70,7 @@ const FloatingChatbot = () => {
           body: JSON.stringify({
             contents: [
               {
+                role: "user",
                 parts: [
                   {
                     text: `${SYSTEM_PROMPT}\nUser: ${userMessage}`,
@@ -79,17 +83,46 @@ const FloatingChatbot = () => {
       );
 
       const data = await response.json();
+      console.log("Gemini response:", data);
+
+      // Handle API errors
+      if (data.error) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "model",
+            text: "API Error: " + data.error.message,
+          },
+        ]);
+        return;
+      }
 
       const responseText =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "Sorry, I couldn't generate a response.";
+        data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-      setMessages((prev) => [...prev, { role: "model", text: responseText }]);
+      if (!responseText) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "model",
+            text: "I couldn't generate a response. Please try again.",
+          },
+        ]);
+        return;
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "model", text: responseText },
+      ]);
     } catch (error) {
       console.error(error);
       setMessages((prev) => [
         ...prev,
-        { role: "model", text: "I apologize, but I am having trouble connecting right now. Please try again later." }
+        {
+          role: "model",
+          text: "I am having trouble connecting. Please try again.",
+        },
       ]);
     } finally {
       setIsLoading(false);
@@ -106,41 +139,37 @@ const FloatingChatbot = () => {
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            transition={{ type: "spring", damping: 25 }}
-            className="mb-4 w-[350px] sm:w-[400px] h-[500px] bg-[#0a0a0a] border border-gold/40 rounded-2xl shadow-[0_0_30px_rgba(212,175,55,0.15)] flex flex-col overflow-hidden"
+            className="mb-4 w-[350px] sm:w-[400px] h-[500px] bg-black border border-yellow-500 rounded-2xl flex flex-col"
           >
             {/* Header */}
-            <div className="p-4 bg-gradient-to-r from-noir to-noir-lighter border-b border-gold/20 flex items-center justify-between">
+            <div className="p-4 border-b border-yellow-500 flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Sparkles className="text-gold" size={20} />
-                <h3 className="font-heading text-gold font-bold">AI Concierge</h3>
+                <Sparkles className="text-yellow-500" />
+                <h3 className="text-yellow-500 font-bold">AI Concierge</h3>
               </div>
-              <button onClick={() => setIsOpen(false)} className="text-ivory/50 hover:text-gold transition-colors">
-                <X size={20} />
+              <button onClick={() => setIsOpen(false)}>
+                <X />
               </button>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[80%] p-3 rounded-2xl text-sm font-body shadow-md ${
-                      msg.role === "user"
-                        ? "bg-gold/10 text-ivory border border-gold/20 rounded-tr-sm"
-                        : "bg-[#111] text-ivory/90 border border-ivory/10 rounded-tl-sm"
-                    }`}
-                  >
+                <div
+                  key={i}
+                  className={`flex ${
+                    msg.role === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div className="bg-gray-800 text-white p-2 rounded-lg max-w-[80%]">
                     {msg.text}
                   </div>
                 </div>
               ))}
 
               {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-[#111] border border-ivory/10 text-gold p-3 rounded-2xl rounded-tl-sm">
-                    <Loader2 size={16} className="animate-spin" />
-                  </div>
+                <div className="text-yellow-500">
+                  <Loader2 className="animate-spin" />
                 </div>
               )}
 
@@ -148,37 +177,29 @@ const FloatingChatbot = () => {
             </div>
 
             {/* Input */}
-            <div className="p-3 border-t border-gold/20 bg-[#111] flex items-center gap-2">
+            <div className="p-3 border-t border-yellow-500 flex gap-2">
               <input
-                type="text"
-                placeholder="Ask about packages, themes, etc..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="flex-1 bg-noir border border-ivory/10 rounded-full px-4 py-2 text-sm text-ivory focus:outline-none focus:border-gold/50"
-                disabled={isLoading}
+                className="flex-1 p-2 bg-black border border-yellow-500 text-white rounded-full"
+                placeholder="Ask about themes, packages..."
               />
-              <button
-                onClick={handleSend}
-                disabled={!input.trim() || isLoading}
-                className="w-10 h-10 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-gold"
-              >
-                <Send size={16} />
+              <button onClick={handleSend}>
+                <Send />
               </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Floating Button */}
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+      {/* Button */}
+      <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 rounded-full bg-gold flex items-center justify-center border-2 border-noir text-noir"
+        className="w-14 h-14 bg-yellow-500 rounded-full flex items-center justify-center"
       >
-        {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
-      </motion.button>
+        {isOpen ? <X /> : <MessageSquare />}
+      </button>
     </div>
   );
 };
