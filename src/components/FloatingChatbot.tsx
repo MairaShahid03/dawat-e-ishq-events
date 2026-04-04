@@ -42,7 +42,12 @@ const FloatingChatbot = () => {
 
     const userMessage = input.trim();
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", text: userMessage }]);
+
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", text: userMessage },
+    ]);
+
     setIsLoading(true);
 
     try {
@@ -60,7 +65,7 @@ const FloatingChatbot = () => {
 
       setMessages((prev) => [
         ...prev,
-        { role: "model", text: data.reply },
+        { role: "model", text: data.reply || "No response" },
       ]);
     } catch (error) {
       console.error(error);
@@ -105,7 +110,9 @@ const FloatingChatbot = () => {
                 <div
                   key={i}
                   className={`flex ${
-                    msg.role === "user" ? "justify-end" : "justify-start"
+                    msg.role === "user"
+                      ? "justify-end"
+                      : "justify-start"
                   }`}
                 >
                   <div className="bg-gray-800 text-white p-2 rounded-lg max-w-[80%]">
@@ -115,8 +122,9 @@ const FloatingChatbot = () => {
               ))}
 
               {isLoading && (
-                <div className="text-yellow-500">
-                  <Loader2 className="animate-spin" />
+                <div className="text-yellow-500 flex items-center gap-2">
+                  <Loader2 className="animate-spin" size={18} />
+                  <span>Thinking...</span>
                 </div>
               )}
 
@@ -128,12 +136,17 @@ const FloatingChatbot = () => {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="flex-1 p-2 bg-black border border-yellow-500 text-white rounded-full"
+                onKeyDown={(e) =>
+                  e.key === "Enter" && handleSend()
+                }
+                className="flex-1 p-2 bg-black border border-yellow-500 text-white rounded-full outline-none"
                 placeholder="Ask about themes, packages..."
               />
-              <button onClick={handleSend}>
-                <Send />
+              <button
+                onClick={handleSend}
+                className="text-yellow-500"
+              >
+                <Send size={20} />
               </button>
             </div>
           </motion.div>
@@ -143,7 +156,7 @@ const FloatingChatbot = () => {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 bg-yellow-500 rounded-full flex items-center justify-center"
+        className="w-14 h-14 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg"
       >
         {isOpen ? <X /> : <MessageSquare />}
       </button>
