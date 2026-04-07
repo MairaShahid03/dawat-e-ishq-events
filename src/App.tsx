@@ -13,7 +13,7 @@ import Login from "./pages/Login";
 import ClientDashboard from "./pages/ClientDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
-import FloatingChatbot from "./components/FloatingChatbot";
+//import FloatingChatbot from "./components/FloatingChatbot";
 
 const queryClient = new QueryClient();
 
@@ -35,7 +35,7 @@ const App = () => (
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <FloatingChatbot />
+           
           </BrowserRouter>
         </TooltipProvider>
       </FavoritesProvider>
