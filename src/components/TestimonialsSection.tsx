@@ -6,7 +6,11 @@ const testimonials = [
   {
     name: "Ayesha & Bilal",
     event: "Wedding — Baraat & Walima",
+<<<<<<< HEAD
     text: "Mehfil-e-Ishq made our wedding a fairy tale. Every detail was perfect, from the floral arrangements to the lighting. Our guests still talk about it!"
+=======
+    text: "Dawat-e-Ishq made our wedding a fairy tale. Every detail was perfect, from the floral arrangements to the lighting. Our guests still talk about it!",
+>>>>>>> 504b2b2252d85791074f8ebecb77b26ee7b1844a
     rating: 5,
   },
   {

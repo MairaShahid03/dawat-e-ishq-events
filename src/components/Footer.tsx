@@ -8,7 +8,11 @@ const Footer = () => (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
         {/* Brand */}
         <div className="md:col-span-1">
+<<<<<<< HEAD
           <img src={logo} alt="Mehfil-e-Ishq" className="h-12 w-auto mb-4" />
+=======
+          <img src={logo} alt="Dawat-e-Ishq" className="h-12 w-auto mb-4" />
+>>>>>>> 504b2b2252d85791074f8ebecb77b26ee7b1844a
           <p className="text-sm leading-relaxed">
             Premium event planning based in Karachi. Crafting unforgettable moments with elegance, tradition, and love.
           </p>
@@ -60,7 +64,11 @@ const Footer = () => (
 
       <div className="border-t border-gold/10 mt-12 pt-8 text-center text-xs text-ivory/40">
         <p className="flex items-center justify-center gap-1">
+<<<<<<< HEAD
           © 2026 Mehfil-e-Ishq. Made with <Heart size={12} className="text-gold" /> in Karachi
+=======
+          © 2026 Dawat-e-Ishq. Made with <Heart size={12} className="text-gold" /> in Karachi
+>>>>>>> 504b2b2252d85791074f8ebecb77b26ee7b1844a
         </p>
       </div>
     </div>

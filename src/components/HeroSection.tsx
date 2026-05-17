@@ -54,7 +54,11 @@ const HeroSection = () => {
           transition={{ delay: 0.3 }}
           className="text-gold font-heading text-lg md:text-xl tracking-[0.3em] uppercase mb-4"
         >
+<<<<<<< HEAD
           Mehfil-e-Ishq
+=======
+          Dawat-e-Ishq
+>>>>>>> 504b2b2252d85791074f8ebecb77b26ee7b1844a
         </motion.p>
         <motion.h1
           initial={{ opacity: 0, y: 30 }}

@@ -13,7 +13,11 @@ import Login from "./pages/Login";
 import ClientDashboard from "./pages/ClientDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
+<<<<<<< HEAD
 import AIChatAssistant from "./components/AIChatAssistant";
+=======
+//import FloatingChatbot from "./components/FloatingChatbot";
+>>>>>>> 504b2b2252d85791074f8ebecb77b26ee7b1844a
 
 const queryClient = new QueryClient();
 
@@ -36,7 +40,10 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
            
+<<<<<<< HEAD
             <AIChatAssistant />
+=======
+>>>>>>> 504b2b2252d85791074f8ebecb77b26ee7b1844a
           </BrowserRouter>
         </TooltipProvider>
       </FavoritesProvider>

@@ -194,7 +194,11 @@ const AdminDashboard = () => {
   const openWhatsApp = (booking: any) => {
     const phone = booking.phone?.replace(/\D/g, "") || "";
     const msg = encodeURIComponent(
+<<<<<<< HEAD
       `Assalam o Alaikum! Your booking for ${booking.sub_categories?.join(", ") || "your event"} on ${booking.event_date || "TBD"} has been approved by Mehfil-e-Ishq. Budget: PKR ${booking.budget_pkr?.toLocaleString() || "N/A"}. We'll be in touch shortly!`
+=======
+      `Assalam o Alaikum! Your booking for ${booking.sub_categories?.join(", ") || "your event"} on ${booking.event_date || "TBD"} has been approved by Dawat-e-Ishq. Budget: PKR ${booking.budget_pkr?.toLocaleString() || "N/A"}. We'll be in touch shortly!`
+>>>>>>> 504b2b2252d85791074f8ebecb77b26ee7b1844a
     );
     window.open(`https://wa.me/${phone.startsWith("92") ? phone : "92" + phone}?text=${msg}`, "_blank");
   };
@@ -300,7 +304,11 @@ const AdminDashboard = () => {
     <div className="flex flex-col h-full bg-noir text-ivory p-4 border-r border-gold/10">
       <div className="mb-8 px-2">
         <h2 className="font-heading text-xl text-gold">Admin Panel</h2>
+<<<<<<< HEAD
         <p className="text-ivory/40 text-xs mt-1">Mehfil-e-Ishq</p>
+=======
+        <p className="text-ivory/40 text-xs mt-1">Dawat-e-Ishq</p>
+>>>>>>> 504b2b2252d85791074f8ebecb77b26ee7b1844a
       </div>
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => (
