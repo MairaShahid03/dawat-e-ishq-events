@@ -71,15 +71,14 @@ const Login = () => {
       <div className="pt-28 pb-20 px-4 flex items-center justify-center min-h-screen">
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
           <div className="text-center mb-8">
-<<<<<<< HEAD
             <img src={logo} alt="Mehfil-e-Ishq" className="h-16 w-auto mx-auto mb-4" />
             <h1 className="font-heading text-3xl text-ivory font-bold">{isSignup ? "Create Account" : "Welcome Back"}</h1>
             <p className="text-ivory/50 font-body text-sm mt-2">{isSignup ? "Join Mehfil-e-Ishq for a premium experience" : "Sign in to manage your events"}</p>
-=======
+
             <img src={logo} alt="Dawat-e-Ishq" className="h-16 w-auto mx-auto mb-4" />
             <h1 className="font-heading text-3xl text-ivory font-bold">{isSignup ? "Create Account" : "Welcome Back"}</h1>
             <p className="text-ivory/50 font-body text-sm mt-2">{isSignup ? "Join Dawat-e-Ishq for a premium experience" : "Sign in to manage your events"}</p>
->>>>>>> 504b2b2252d85791074f8ebecb77b26ee7b1844a
+
           </div>
 
           <div className="glass rounded-2xl p-8">
