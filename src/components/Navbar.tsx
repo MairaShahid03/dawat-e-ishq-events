@@ -42,10 +42,18 @@ const Navbar = () => {
     >
       <div className="container mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-20">
-          <Link to="/" className="flex items-center">
 
-            <img src={logo} alt="Mehfil-e-Ishq" className="h-12 md:h-14 w-auto" />
-            <img src={logo} alt="Dawat-e-Ishq" className="h-12 md:h-14 w-auto" />
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-3">
+            <img
+              src={logo}
+              alt="Mehfil-e-Ishq"
+              className="h-12 md:h-14 w-auto"
+            />
+
+            <span className="text-ivory font-heading text-lg md:text-xl tracking-wide">
+              Mehfil-e-Ishq
+            </span>
           </Link>
 
           {/* Desktop Nav */}
@@ -55,20 +63,25 @@ const Navbar = () => {
                 key={link.path}
                 to={link.path}
                 className={`font-body text-sm tracking-wider uppercase transition-colors duration-300 ${
-                  isActive(link.path) ? "text-gold" : "text-ivory/80 hover:text-gold"
+                  isActive(link.path)
+                    ? "text-gold"
+                    : "text-ivory/80 hover:text-gold"
                 }`}
               >
                 {link.label}
               </Link>
             ))}
+
             {user ? (
               <div className="flex items-center gap-4">
                 <NotificationBell />
+
                 <Link
                   to={profile?.role === "admin" ? "/admin" : "/dashboard"}
                   className="text-ivory/80 hover:text-gold font-body text-sm tracking-wider uppercase transition-colors flex items-center gap-2"
                 >
-                  <LayoutDashboard size={16} /> Dashboard
+                  <LayoutDashboard size={16} />
+                  Dashboard
                 </Link>
               </div>
             ) : (
@@ -76,9 +89,11 @@ const Navbar = () => {
                 to="/login"
                 className="flex items-center gap-2 text-ivory/80 hover:text-gold font-body text-sm tracking-wider uppercase transition-colors duration-300"
               >
-                <LogIn size={16} /> Login
+                <LogIn size={16} />
+                Login
               </Link>
             )}
+
             <Link to="/booking" className="btn-luxury text-sm">
               Book Now
             </Link>
@@ -104,28 +119,37 @@ const Navbar = () => {
             className="md:hidden bg-noir/95 backdrop-blur-xl border-t border-gold/10"
           >
             <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
+
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
                   className={`font-body text-base py-2 tracking-wider uppercase transition-colors ${
-                    isActive(link.path) ? "text-gold" : "text-ivory/80 hover:text-gold"
+                    isActive(link.path)
+                      ? "text-gold"
+                      : "text-ivory/80 hover:text-gold"
                   }`}
                 >
                   {link.label}
                 </Link>
               ))}
+
               {user ? (
                 <>
                   <div className="py-2 border-y border-gold/10 my-2 flex items-center justify-between">
-                    <span className="text-ivory/80 font-body text-base tracking-wider uppercase">Notifications</span>
+                    <span className="text-ivory/80 font-body text-base tracking-wider uppercase">
+                      Notifications
+                    </span>
+
                     <NotificationBell />
                   </div>
+
                   <Link
                     to={profile?.role === "admin" ? "/admin" : "/dashboard"}
                     className="text-ivory/80 hover:text-gold font-body text-base py-2 tracking-wider uppercase transition-colors flex items-center gap-2"
                   >
-                    <LayoutDashboard size={16} /> Dashboard
+                    <LayoutDashboard size={16} />
+                    Dashboard
                   </Link>
                 </>
               ) : (
@@ -133,9 +157,11 @@ const Navbar = () => {
                   to="/login"
                   className="text-ivory/80 hover:text-gold font-body text-base py-2 tracking-wider uppercase transition-colors flex items-center gap-2"
                 >
-                  <LogIn size={16} /> Login
+                  <LogIn size={16} />
+                  Login
                 </Link>
               )}
+
               <Link to="/booking" className="btn-luxury text-center mt-2">
                 Book Now
               </Link>
